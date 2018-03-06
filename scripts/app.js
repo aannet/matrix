@@ -4,7 +4,7 @@
 const CANVAS = {WIDTH: 800, HEIGHT:600};
 const ALPHABET = {MIN:161, MAX:500};
 // const ALPHABET = {MIN:97, MAX:126};
-const LENGTHCHARSERIES = {MIN:8, MAX:25};
+const LENGTHCHARSERIES = {MIN:20, MAX:50};
 const DEPTH = {MIN:1, MAX:5};
 const DEPTHCOLOR = ["#2EE57B","#0dcb5d","#1AB25A","#129C4C","#0D7B3B"];
 
@@ -17,7 +17,7 @@ document.body.appendChild(app.view);
 // ---------------------------------------
 var textStyle = {
   fontFamily: "Consolas",
-  fontSize: 13,
+  fontSize: 15,
   fontWeight: "normal",
   fill: ["#0dcb5d"], // gradient
   /*stroke: "#4a1850",
@@ -55,36 +55,42 @@ var textStyleSettings = [styleDepth1, styleDepth2, styleDepth3, styleDepth4, sty
 // });
 
 
-
-
-
 class CharList {
 
+    //The "property" way of defining the class attributes may not be the best but it was a test
+    
     // position.x
     // position.y
     // charList[]
     // pixiTextList[]
     // depth
+    // length
+    // currentIndex
 
 
-    constructor(x = 0) {
-        this.position = {x: x, y:0},
-        this.charList = new Array();
-        this.pixiTextList = new Array();
+    constructor(argx = 0) {
+        this.position = {x: 0, y:0},
+        this.charSerie = new Array();
+        this.pixiTextSerie = new Array();
+        this.currentIndex = 0;
 
         this.generateRandomPosition();
         this.generateRandomDepth();
-        this.generateRandomCharList();
-        this.generatePixiTextList();
+        this.generateRandomCharSerie();
+        this.generatePixiTextSerie();
     }
 
     /**
      * Generate Random X Y position from canvas dimensions
      */
     generateRandomPosition() {
-        const x = (this.x !== 0) ? this.x : getRandomInt(0, CANVAS.WIDTH);
-        const y = 1; //getRandomInt(0, CANVAS.HEIGHT);
-        this.position = {x:x, y:y};
+        //const xx = ((this.x != 0) ? this.x : getRandomInt(0, CANVAS.WIDTH));
+        //const yy = 100; //getRandomInt(0, CANVAS.HEIGHT);
+
+        const xx = getRandomInt(0, CANVAS.WIDTH);
+        const yy = getRandomInt(0, CANVAS.HEIGHT);
+
+        this.position = {x:xx, y:yy};
     }
 
     /**
@@ -95,71 +101,191 @@ class CharList {
     }
 
     /**
-     * Adds a char to list.
+     * Adds a char to Serie.
      *
      * @param      {integer}  charCode  The character code
      */
-    addChartoList(charCode) {
-        this.charList.push(charCode);
+    addCharToSerie(charCode) {
+        this.charSerie.push(charCode);
     }
 
     /**
-     * Generate a random char number list
+     * Generate a random char number Serie
      */
-    generateRandomCharList() {
+    generateRandomCharSerie() {
       const newRandomMaxLength = getRandomInt(LENGTHCHARSERIES.MIN, LENGTHCHARSERIES.MAX);
         for(let i=0; i<newRandomMaxLength; i++) {
             const newRandomCharToAdd = String.fromCharCode(getRandomInt(ALPHABET.MIN, ALPHABET.MAX));
-            this.addChartoList(newRandomCharToAdd);
+            this.addCharToSerie(newRandomCharToAdd);
         }
     }
 
     /**
-     * Generate the corresponding pixi objects from the charlist
+     * Generate the corresponding pixi objects from the charSerie
      * TODO: replace 10 with a ratio from the textstyle fontsize
      */
-    generatePixiTextList() {
+    generatePixiTextSerie() {
         let i = 0;
-        for ( var singleChar in this.charList) {
-            // const newPixiChar = new PIXI.Text(this.charList[singleChar], styleDepth5);
-            const newPixiChar = new PIXI.Text(this.charList[singleChar], textStyleSettings[this.depth-1]);
+        for ( var singleChar in this.charSerie) {
+            // const newPixiChar = new PIXI.Text(this.charSerie[singleChar], styleDepth5);
+            const newPixiChar = new PIXI.Text(this.charSerie[singleChar], textStyleSettings[this.depth-1]);
             // console.log(singleChar);
             newPixiChar.x = this.position.x;
-            newPixiChar.y = this.position.y + i*10;
-            this.pixiTextList.push(newPixiChar);
+            newPixiChar.y = this.position.y + i*15;
+            this.pixiTextSerie.push(newPixiChar);
             i++;
         }
     }
 
     /**
-     * Display the current charlist
+     * Display the complete charSerie
      */
-    displayPixiTextList() {
-        this.pixiTextList.forEach(function(pixiText) {
-            app.stage.addChild(pixiText);
-            // console.log(style);
-        });
+    displayFullPixiTextSerie() {
+        let i = 0;
+        for ( var singleChar in this.charSerie) {
+            this.displaySinglePixiText(i);
+            i++;
+        }
+    }
+
+    /**
+     * Display a single char from the complete char serie 
+     *
+     * @param      {index}  index   The index of the char serie
+     */
+    displaySinglePixiText(index) {
+        try {
+            if (typeof(index) !== 'number') {
+                throw('Index is not defined or is not an integer');
+            }
+            index = parseInt(index)
+            if (index < 0 || index > this.charSerie.length) {
+                throw('Index is out of boundaries');
+            }
+            const pixiText = this.pixiTextSerie[index];
+
+            if (pixiText.position.y < CANVAS.HEIGHT && pixiText.position.y > 0
+                && pixiText.position.x > 0 && pixiText.position.x < CANVAS.WIDTH) {
+                app.stage.addChild(pixiText);
+            }
+        }
+        catch(e) {
+            console.log('Error in displaySinglePixiText :' + e);
+        }
+    }
+
+
+    /**
+     * { function_description }
+     *
+     * @return     {boolean}  currentindex or false if max
+     */
+    displayNextSinglePixiText() {
+
+        if ( this.currentIndex + 1 < this.charSerie.length ) {
+            this.currentIndex++;
+            
+            this.displaySinglePixiText(this.currentIndex);
+            return this.currentIndex;
+        }
+        else {
+            return false;
+        }
+    }
+
+
+
+    /**
+     * Return the char serie length
+     * Not used
+     *
+     * @return     {integer}  { description_of_the_return_value }
+     */
+    length() {
+       return this.charSerie.length;
     }
 
 }
 
-// GENERATE 20 OBJECTS OF CHARLIST
+// TODO : GENERATE 20 OBJECTS OF CHARSerie
 // let charSerieList = new Object();
 // console.log(tmp);
 
-for ( let i=0; i< CANVAS.WIDTH; i+=10 ) {
-  let tmp = new CharList(i);
-  tmp.displayPixiTextList();
+// for ( let i=10; i< CANVAS.WIDTH; i+=10 ) {
+//   let tmp = new CharList(i);
+//   tmp.displayPixiTextList();
+// }
+
+/*
+class CharListManager {
+
+    constructor() {
+
+    }
+
+
+    animate() {
+
+    }
+
 
 }
 
-// for (let i=0; i< 600; i++) {
-//   console.log(String.fromCharCode(i) + '' + i);
-// }
+  let tmp = new CharList(50);
+  tmp.displayFullPixiTextList();
+*/
+
+
+
+
+document.getElementById('btnCreate').addEventListener('click', function() {
+  // let tmp = new CharList(50);
+  // tmp.displayFullPixiTextSerie();
+
+
+
+    let mycharlist = new CharList();
+
+ /*
+    let i = 0;
+    for (let i = 0; i < mycharlist.length(); i++) {
+        mycharlist.displaySinglePixiText(i);
+        
+    }*/
+
+
+    var myVar = setInterval(myTimer, 50);
+    
+    function myTimer() {
+        let ret = mycharlist.displayNextSinglePixiText();
+        if ( ret === false ) window.clearInterval(myVar);
+    }
+});
+
 
 
 document.getElementById('btnAnimate').addEventListener('click', function() {
-  // console.log(String.fromCharCode(getRandomInt()));
+
+    //GENERATION
+    charlistArray = new Array();
+    let max = 100;
+    for (let i = 0; i< max; i++) {
+        let mycharlist = new CharList();
+        charlistArray.push(mycharlist);
+    }
+
+    //ANIMATE
+    var myVar = setInterval(myTimer, 100);
+    
+    function myTimer() {
+
+        for (let i = 0; i< max; i++) {
+            charlistArray[i].displayNextSinglePixiText();
+        }
+
+        // let ret = mycharlist.displayNextSinglePixiText();
+        // if ( ret === false ) window.clearInterval(myVar);
+    }
+
 
 });
-
